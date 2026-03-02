@@ -21,6 +21,7 @@ interface PlanContextValue {
   actions: Action[]
   setFinancialData: (raw: Record<MonthId, { receita: number; gastos: number }>) => void
   saveFinancial: (raw: Record<MonthId, { receita: number; gastos: number }>) => Promise<void>
+  saveSaldoInicial: (value: number) => Promise<void>
   setActions: (actions: Action[] | ((prev: Action[]) => Action[])) => void
   saveActions: (next: Action[]) => Promise<void>
   loadPlan: () => Promise<void>
@@ -106,6 +107,23 @@ export function PlanProvider({ children }: { children: ReactNode }) {
 
   const clearSaveError = useCallback(() => setSaveError(null), [])
 
+  const saveSaldoInicial = useCallback(
+    async (value: number) => {
+      if (!payload) return
+      setSaveError(null)
+      try {
+        const next: CapitalPlanPayload = { ...payload, saldoInicial: value }
+        await updatePayload(next)
+        setPayloadState(next)
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Erro ao salvar saldo'
+        setSaveError(msg)
+        throw e
+      }
+    },
+    [payload]
+  )
+
   const setActions = useCallback(
     (updater: Action[] | ((prev: Action[]) => Action[])) => {
       if (!payload) return
@@ -122,6 +140,7 @@ export function PlanProvider({ children }: { children: ReactNode }) {
       actions: payload?.actions ?? [],
       setFinancialData,
       saveFinancial,
+      saveSaldoInicial,
       setActions,
       saveActions,
       loadPlan,
@@ -135,6 +154,7 @@ export function PlanProvider({ children }: { children: ReactNode }) {
       financialData,
       setFinancialData,
       saveFinancial,
+      saveSaldoInicial,
       setActions,
       saveActions,
       loadPlan,

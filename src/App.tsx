@@ -1,9 +1,13 @@
 import { useState, useCallback, useEffect } from 'react'
+import { Pencil } from 'lucide-react'
 import { PlanProvider, usePlan } from '@/context/PlanContext'
 import { LockScreen } from '@/components/LockScreen'
 import { SummaryScreen } from '@/components/SummaryScreen'
 import { FinanceiroScreen } from '@/components/FinanceiroScreen'
 import { MonthScreen } from '@/components/MonthScreen'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { MONTHS, fmtR } from '@/constants'
 import type { MonthId } from '@/types'
 
@@ -11,8 +15,10 @@ const UNLOCK_KEY = 'capital_plan_unlocked'
 
 function MainApp() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(UNLOCK_KEY) === '1')
-  const { loadPlan, isLoading, loadError, financialData, actions, saldoInicial } = usePlan()
+  const { loadPlan, isLoading, loadError, financialData, actions, saldoInicial, saveSaldoInicial } = usePlan()
   const [activeTab, setActiveTab] = useState<string>('resumo')
+  const [saldoPopoverOpen, setSaldoPopoverOpen] = useState(false)
+  const [saldoEditValue, setSaldoEditValue] = useState('')
 
   const handleUnlock = useCallback(() => {
     sessionStorage.setItem(UNLOCK_KEY, '1')
@@ -67,10 +73,62 @@ function MainApp() {
           </div>
           <h1 className="text-[17px] font-bold text-white">Plano de Caixa 2026</h1>
         </div>
-        <div className="text-[10px] text-[#4A5A7A]">
-          Saldo atual:{' '}
-          <span className="text-[#FFB74D] font-bold">{fmtR(saldoInicial)}</span>
-        </div>
+        <Popover
+          open={saldoPopoverOpen}
+          onOpenChange={(open) => {
+            setSaldoPopoverOpen(open)
+            if (open) setSaldoEditValue(String(saldoInicial))
+          }}
+        >
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="text-[10px] text-[#4A5A7A] flex items-center gap-1.5 rounded-md px-2 py-1 -my-1 hover:bg-[#16213A] transition-colors outline-none focus:ring-2 focus:ring-[#4FC3F7]/50"
+              aria-label="Alterar saldo atual"
+            >
+              Saldo atual:{' '}
+              <span className="text-[#FFB74D] font-bold">{fmtR(saldoInicial)}</span>
+              <Pencil className="w-3 h-3 text-[#4A5A7A]" aria-hidden />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-64 bg-[#0D1527] border-[#1E2D48]"
+            align="end"
+            sideOffset={8}
+          >
+            <div className="space-y-3">
+              <label className="block text-[10px] text-[#4A5A7A] uppercase tracking-wider">
+                Saldo atual (R$)
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={saldoEditValue}
+                onChange={(e) => setSaldoEditValue(e.target.value)}
+                className="bg-[#060B16] border-[#1E2D48] text-[#E0E4F0]"
+                aria-label="Valor do saldo em reais"
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="w-full bg-[#4FC3F7] text-[#060B16] hover:bg-[#4FC3F7]/90 font-bold text-sm"
+                onClick={async () => {
+                  const num = Number(saldoEditValue.replace(/,/g, '.').trim())
+                  if (Number.isNaN(num) || num < 0) return
+                  try {
+                    await saveSaldoInicial(num)
+                    setSaldoPopoverOpen(false)
+                  } catch {
+                    // saveError fica no context; popover pode permanecer aberto
+                  }
+                }}
+              >
+                Salvar
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </header>
 
       {/* Tabs */}
