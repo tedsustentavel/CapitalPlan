@@ -15,6 +15,18 @@ export const MONTHS: { id: MonthId; label: string; short: string; semanas: strin
   { id: 'dez', label: 'Dezembro', short: 'Dez', semanas: ['01–07 Dez', '08–14 Dez', '15–21 Dez', '22–31 Dez'] },
 ]
 
+export const SECTORS = [
+  'Comercial',
+  'Operações',
+  'Financeiro',
+  'RH',
+  'TI',
+  'Marketing',
+  'Executivo',
+  'Jurídico',
+  'Outro',
+] as const
+
 export const STATUS_OPTIONS = ['Planejado', 'Em andamento', 'Realizado', 'Cancelado'] as const
 
 export const STATUS_STYLE: Record<string, { color: string; bg: string; dot: string }> = {
@@ -32,6 +44,9 @@ export const EMPTY_FORM: {
   prazo: string
   status: string
   resultado: string
+  setor: string
+  mes: MonthId
+  semana: number
 } = {
   descricao: '',
   responsavel: '',
@@ -40,6 +55,9 @@ export const EMPTY_FORM: {
   prazo: '',
   status: 'Planejado',
   resultado: '',
+  setor: '',
+  mes: 'jan',
+  semana: 1,
 }
 
 export function fmtR(v: number): string {
