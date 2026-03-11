@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { STATUS_OPTIONS, STATUS_STYLE } from '@/constants'
+import { SECTORS, STATUS_OPTIONS, STATUS_STYLE } from '@/constants'
 import type { Action } from '@/types'
 
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
@@ -55,7 +55,10 @@ const labelClass = 'block text-[9px] text-[#4A5A7A] uppercase tracking-wider mb-
 const inputClass =
   'w-full bg-[#0D1527] border border-[#1E2D48] rounded-lg px-3 py-2 text-sm text-[#E0E4F0] font-serif outline-none'
 
-export type ActionFormData = Pick<Action, 'descricao' | 'responsavel' | 'valor' | 'sinal' | 'prazo' | 'status' | 'resultado'>
+export type ActionFormData = Pick<
+  Action,
+  'descricao' | 'responsavel' | 'valor' | 'sinal' | 'prazo' | 'status' | 'resultado' | 'setor' | 'mes' | 'semana'
+>
 
 interface ActionFormProps {
   form: ActionFormData
@@ -95,6 +98,27 @@ export function ActionForm({
             onChange={(e) => setForm({ ...form, responsavel: e.target.value })}
             className={inputClass}
           />
+        </div>
+        <div>
+          <label className={labelClass}>Setor (vazio = Backlog)</label>
+          <Select
+            value={form.setor && form.setor !== '' ? form.setor : 'backlog'}
+            onValueChange={(v) =>
+              setForm({ ...form, setor: v === 'backlog' ? '' : v })
+            }
+          >
+            <SelectTrigger className={inputClass}>
+              <SelectValue placeholder="Backlog" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="backlog">Backlog</SelectItem>
+              {SECTORS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className={labelClass}>Valor (R$)</label>
