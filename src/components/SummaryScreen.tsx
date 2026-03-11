@@ -1,12 +1,12 @@
+import { useMemo } from 'react'
 import { MONTHS, fmtK, fmtD, parseValor } from '@/constants'
 import { usePlan } from '@/context/PlanContext'
-import type { MonthId } from '@/types'
 
 interface SummaryScreenProps {
-  onSelectMonth: (id: MonthId) => void
+  onSelectSector: (id: string) => void
 }
 
-export function SummaryScreen({ onSelectMonth }: SummaryScreenProps) {
+export function SummaryScreen({ onSelectSector }: SummaryScreenProps) {
   const { financialData, actions, saldoInicial } = usePlan()
 
   const totalBaseAnual = Object.values(financialData).reduce((s, m) => s + (m?.resultado ?? 0), 0)
@@ -14,16 +14,31 @@ export function SummaryScreen({ onSelectMonth }: SummaryScreenProps) {
   const totalRealAnual = actions
     .filter((a) => a.status === 'Realizado')
     .reduce((s, a) => s + parseValor(a.valor, a.sinal), 0)
-  const resultadoAnual = totalBaseAnual + totalPlanoAnual
-
   let runwayAcum = saldoInicial
   const runways = MONTHS.map((m) => {
-    const plano = actions
-      .filter((a) => a.mes === m.id)
-      .reduce((s, a) => s + parseValor(a.valor, a.sinal), 0)
-    runwayAcum += (financialData[m.id]?.resultado ?? 0) + plano
+    runwayAcum += financialData[m.id]?.resultado ?? 0
     return runwayAcum
   })
+
+  const sectorItems = useMemo(() => {
+    const backlogActions = actions.filter((a) => !a.setor || a.setor === '')
+    const setores = new Set(
+      actions.map((a) => a.setor).filter((s): s is string => !!s)
+    )
+    const list: { id: string; label: string; actions: typeof actions }[] = [
+      { id: 'backlog', label: 'Backlog', actions: backlogActions },
+    ]
+    Array.from(setores)
+      .sort()
+      .forEach((setorId) => {
+        list.push({
+          id: setorId,
+          label: setorId,
+          actions: actions.filter((a) => a.setor === setorId),
+        })
+      })
+    return list
+  }, [actions])
 
   const cards = [
     {
@@ -45,14 +60,14 @@ export function SummaryScreen({ onSelectMonth }: SummaryScreenProps) {
       color: 'text-[#00D4A1]',
     },
     {
-      label: 'Resultado projetado',
-      value: fmtK(resultadoAnual),
-      sub: 'base + plano',
+      label: 'Resultado projetado (caixa)',
+      value: fmtK(totalBaseAnual),
+      sub: 'apenas base, sem estimativa das ações',
       bold: true,
       color:
-        resultadoAnual >= 0
+        totalBaseAnual >= 0
           ? 'text-[#00D4A1]'
-          : resultadoAnual > -200000
+          : totalBaseAnual > -200000
             ? 'text-[#FFB74D]'
             : 'text-[#EF9A9A]',
     },
@@ -82,48 +97,41 @@ export function SummaryScreen({ onSelectMonth }: SummaryScreenProps) {
       </div>
 
       <div className="text-[9px] text-[#4A5A7A] uppercase tracking-widest mb-3.5">
-        Visão mensal · clique para abrir
+        Por setor · clique para abrir
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {MONTHS.map((m, idx) => {
-          const fin = financialData[m.id]
-          const mActions = actions.filter((a) => a.mes === m.id)
-          const mPlano = mActions.reduce((s, a) => s + parseValor(a.valor, a.sinal), 0)
-          const runway = runways[idx]
-          const runwayNeg = runway < 0
-          const runwayCrit = runway >= 0 && runway < 100000
-          const realizadas = mActions.filter((a) => a.status === 'Realizado').length
-          const pct = mActions.length > 0 ? Math.round((realizadas / mActions.length) * 100) : 0
+        {sectorItems.map((item) => {
+          const sActions = item.actions
+          const sPlano = sActions.reduce(
+            (s, a) => s + parseValor(a.valor, a.sinal),
+            0
+          )
+          const realizadas = sActions.filter(
+            (a) => a.status === 'Realizado'
+          ).length
+          const pct =
+            sActions.length > 0
+              ? Math.round((realizadas / sActions.length) * 100)
+              : 0
           return (
             <div
-              key={m.id}
+              key={item.id}
               role="button"
               tabIndex={0}
-              onClick={() => onSelectMonth(m.id)}
-              onKeyDown={(e) => e.key === 'Enter' && onSelectMonth(m.id)}
-              className={`bg-[#0D1527] rounded-xl p-4 cursor-pointer border transition-colors hover:border-[#4FC3F766] ${
-                runwayNeg
-                  ? 'border-[#EF9A9A33]'
-                  : runwayCrit
-                    ? 'border-[#FFB74D33]'
-                    : 'border-[#16213A]'
-              }`}
+              onClick={() => onSelectSector(item.id)}
+              onKeyDown={(e) =>
+                e.key === 'Enter' && onSelectSector(item.id)
+              }
+              className="bg-[#0D1527] rounded-xl p-4 cursor-pointer border border-[#16213A] transition-colors hover:border-[#4FC3F766]"
             >
               <div className="flex justify-between items-start mb-2.5">
-                <div>
-                  <div className="text-[9px] text-[#4A5A7A] mb-0.5">2026</div>
-                  <div
-                    className={`text-[15px] font-bold ${
-                      runwayNeg ? 'text-[#EF9A9A]' : runwayCrit ? 'text-[#FFB74D]' : 'text-[#E0E4F0]'
-                    }`}
-                  >
-                    {m.label}
-                  </div>
+                <div className="text-[15px] font-bold text-[#E0E4F0]">
+                  {item.label}
                 </div>
-                {mActions.length > 0 && (
+                {sActions.length > 0 && (
                   <div className="text-right">
                     <div className="text-[9px] text-[#4A5A7A]">
-                      {realizadas}/{mActions.length}
+                      {realizadas}/{sActions.length}
                     </div>
                     <div
                       className={`text-[9px] ${pct === 100 ? 'text-[#00D4A1]' : 'text-[#4A5A7A]'}`}
@@ -134,37 +142,31 @@ export function SummaryScreen({ onSelectMonth }: SummaryScreenProps) {
                 )}
               </div>
               <div className="mb-1.5">
-                <div className="text-[9px] text-[#4A5A7A] mb-0.5">Resultado base</div>
+                <div className="text-[9px] text-[#4A5A7A] mb-0.5">Plano (est.)</div>
                 <div
-                  className={`text-[13px] font-bold ${(fin?.resultado ?? 0) < 0 ? 'text-[#EF9A9A]' : 'text-[#00D4A1]'}`}
+                  className={`text-[13px] font-bold ${sPlano >= 0 ? 'text-[#00D4A1]' : 'text-[#EF9A9A]'}`}
                 >
-                  {fmtK(fin?.resultado ?? 0)}
+                  {fmtK(sPlano)}
                 </div>
               </div>
-              {mPlano !== 0 && (
-                <>
-                  <div className="mb-1.5">
-                    <div className="text-[9px] text-[#4A5A7A] mb-0.5">Plano</div>
-                    <div
-                      className={`text-xs ${mPlano > 0 ? 'text-[#00D4A1]' : 'text-[#EF9A9A]'}`}
-                    >
-                      {fmtD(mPlano) ?? '—'}
-                    </div>
+              {sPlano !== 0 && (
+                <div className="mb-1.5">
+                  <div className="text-[9px] text-[#4A5A7A] mb-0.5">
+                    Realizado
                   </div>
-                  <div className="h-px bg-[#16213A] my-2" />
-                </>
-              )}
-              <div>
-                <div className="text-[9px] text-[#4A5A7A] mb-0.5">Runway após mês</div>
-                <div
-                  className={`text-xs font-bold ${
-                    runwayNeg ? 'text-[#EF9A9A]' : runwayCrit ? 'text-[#FFB74D]' : 'text-[#8A9BBE]'
-                  }`}
-                >
-                  {fmtK(runway)}
+                  <div className="text-xs text-[#8A9BBE]">
+                    {fmtD(
+                      sActions
+                        .filter((a) => a.status === 'Realizado')
+                        .reduce(
+                          (s, a) => s + parseValor(a.valor, a.sinal),
+                          0
+                        )
+                    ) ?? '—'}
+                  </div>
                 </div>
-              </div>
-              {mActions.length > 0 && (
+              )}
+              {sActions.length > 0 && (
                 <div className="mt-2.5">
                   <div className="bg-[#111827] rounded-sm h-1 overflow-hidden">
                     <div

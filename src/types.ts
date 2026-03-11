@@ -22,6 +22,7 @@ export interface Action {
   id: string
   mes: MonthId
   semana: number
+  setor?: string
   descricao: string
   responsavel: string
   valor: string
