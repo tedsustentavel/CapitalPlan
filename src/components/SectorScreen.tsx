@@ -78,6 +78,7 @@ export function SectorScreen({ setorId }: SectorScreenProps) {
       prazo: a.prazo,
       status: a.status,
       resultado: a.resultado,
+      pep_previsto: a.pep_previsto ?? false,
       setor: a.setor ?? '',
       mes: a.mes,
       semana: a.semana,

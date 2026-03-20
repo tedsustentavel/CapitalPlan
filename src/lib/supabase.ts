@@ -26,7 +26,11 @@ function dbRowToPayload(row: CapitalPlanDbRow): CapitalPlanRow {
     payload: {
       saldoInicial: Number(row.saldo_inicial),
       financialData: row.financial_data ?? {},
-      actions: row.actions ?? [],
+      // Garante compatibilidade com registros antigos onde `pep_previsto` não existia.
+      actions: (row.actions ?? []).map((a) => ({
+        ...a,
+        pep_previsto: typeof a.pep_previsto === 'boolean' ? a.pep_previsto : false,
+      })),
     },
   }
 }
