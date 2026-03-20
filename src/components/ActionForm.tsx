@@ -57,7 +57,7 @@ const inputClass =
 
 export type ActionFormData = Pick<
   Action,
-  'descricao' | 'responsavel' | 'valor' | 'sinal' | 'prazo' | 'status' | 'resultado' | 'setor' | 'mes' | 'semana'
+  'descricao' | 'responsavel' | 'valor' | 'sinal' | 'prazo' | 'status' | 'resultado' | 'pep_previsto' | 'setor' | 'mes' | 'semana'
 >
 
 interface ActionFormProps {
@@ -231,6 +231,19 @@ export function ActionForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="md:col-span-3 flex items-center gap-2 mt-1">
+          <input
+            id="pep-previsto"
+            type="checkbox"
+            checked={!!form.pep_previsto}
+            onChange={(e) => setForm({ ...form, pep_previsto: e.target.checked })}
+            className="h-4 w-4 rounded border-[#1E2D48] bg-[#0D1527] text-[#4FC3F7] focus:ring-[#4FC3F7]/50"
+            aria-label="Já previsto no PEP"
+          />
+          <label htmlFor="pep-previsto" className="block text-[10px] text-[#4A5A7A] uppercase tracking-wider">
+            Já previsto no PEP
+          </label>
         </div>
         <div className="md:col-span-2">
           <label className={labelClass}>Resultado / Observação</label>

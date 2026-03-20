@@ -44,6 +44,7 @@ export const EMPTY_FORM: {
   prazo: string
   status: string
   resultado: string
+  pep_previsto: boolean
   setor: string
   mes: MonthId
   semana: number
@@ -55,6 +56,7 @@ export const EMPTY_FORM: {
   prazo: '',
   status: 'Planejado',
   resultado: '',
+  pep_previsto: false,
   setor: '',
   mes: 'jan',
   semana: 1,

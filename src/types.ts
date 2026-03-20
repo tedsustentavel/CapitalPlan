@@ -30,6 +30,11 @@ export interface Action {
   prazo: string
   status: string
   resultado: string
+  /**
+   * Indica se a ação/previsto já está contemplada no PEP.
+   * Persistido dentro do JSONB `capital_plan.actions`.
+   */
+  pep_previsto?: boolean
 }
 
 export interface CapitalPlanPayload {
